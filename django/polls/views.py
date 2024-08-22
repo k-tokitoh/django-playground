@@ -2,21 +2,32 @@ from django.db.models import F
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
+from django.views import generic
 
 from .models import Choice, Question
 
 
-def index(request):
-    latest_question_list = Question.objects.order_by("-pub_date")[:5]
-    # {application}/templates の中を探してくれる
-    context = {
-        "latest_question_list": latest_question_list,
-    }
-    return render(request, "polls/index.html", context)
-    # render()というショートカットは以下と等価
-    # from django.template import loader
-    # template = loader.get_template("polls/index.html")
-    # return HttpResponse(template.render(context, request))
+class IndexView(generic.ListView):
+    template_name = "polls/index.html"
+    # templateでこの名前の変数に、get_queryset()の返り値が詰め込まれる
+    context_object_name = "latest_question_list"
+
+    def get_queryset(self):
+        return Question.objects.order_by("-pub_date")[:5]
+
+
+# 以下と等価
+# def index(request):
+#     latest_question_list = Question.objects.order_by("-pub_date")[:5]
+#     # {application}/templates の中を探してくれる
+#     context = {
+#         "latest_question_list": latest_question_list,
+#     }
+#     return render(request, "polls/index.html", context)
+#     # render()というショートカットは以下と等価
+#     # from django.template import loader
+#     # template = loader.get_template("polls/index.html")
+#     # return HttpResponse(template.render(context, request))
 
 
 def detail(request, question_id):
@@ -30,9 +41,16 @@ def detail(request, question_id):
     return render(request, "polls/detail.html", {"question": question})
 
 
-def results(request, question_id):
-    question = get_object_or_404(Question, pk=question_id)
-    return render(request, "polls/results.html", {"question": question})
+class ResultsView(generic.DetailView):
+    model = Question
+    template_name = "polls/results.html"
+
+
+# 以下と等価
+# `model = Question`によって、templateに{"question": question}を渡すところまでやってくれるのか！！
+# def results(request, question_id):
+#     question = get_object_or_404(Question, pk=question_id)
+#     return render(request, "polls/results.html", {"question": question})
 
 
 # シンプルにdispatchするだけだと、methodは区別しないらしい
