@@ -1,6 +1,9 @@
-from django.http import HttpResponse
-from .models import Question
-from django.shortcuts import render, get_object_or_404
+from django.db.models import F
+from django.http import HttpResponseRedirect
+from django.shortcuts import get_object_or_404, render
+from django.urls import reverse
+
+from .models import Choice, Question
 
 
 def index(request):
@@ -28,9 +31,30 @@ def detail(request, question_id):
 
 
 def results(request, question_id):
-    response = "You're looking at the results of question %s."
-    return HttpResponse(response % question_id)
+    question = get_object_or_404(Question, pk=question_id)
+    return render(request, "polls/results.html", {"question": question})
 
 
+# シンプルにdispatchするだけだと、methodは区別しないらしい
 def vote(request, question_id):
-    return HttpResponse("You're voting on question %s." % question_id)
+    question = get_object_or_404(Question, pk=question_id)
+    try:
+        selected_choice = question.choice_set.get(pk=request.POST["choice"])
+    except (KeyError, Choice.DoesNotExist):
+        # 詳細画面にエラーメッセージつきでリダイレクトする
+        return render(
+            request,
+            "polls/detail.html",
+            {
+                "question": question,
+                "error_message": "有効な回答が選択されていません",
+            },
+        )
+    else:
+        # F()をつかうと競合状態を避けることができる
+        # https://docs.djangoproject.com/ja/5.1/ref/models/expressions/#avoiding-race-conditions-using-f
+        selected_choice.votes = F("votes") + 1
+        selected_choice.save()
+        # postをそのまま201とかで返しちゃうと、ブラウザの戻るボタンでpostが再送信されてしまう
+        # getリクエストにリダイレクトしておけば、戻るボタンではリダイレクト後のページにアクセスするだけで、再送信を防げる
+        return HttpResponseRedirect(reverse("polls:results", args=(question.id,)))
