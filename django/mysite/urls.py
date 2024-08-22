@@ -19,7 +19,9 @@ from django.contrib import admin
 from django.urls import path, include
 
 urlpatterns = [
-    path("polls/", include("polls.urls")),
+    # それぞれで完結して回遊させるためには、namespaceでインスタンス名前空間を与える必要がある
+    path("polls/", include("polls.urls", namespace="original")),
+    path("yet-another-polls/", include("polls.urls", namespace="yet-another")),
     # URLパターンをインクルードするときは常に include() を使うべきです。 admin.site.urls はこれについての唯一の例外です。
     # https://docs.djangoproject.com/ja/5.1/intro/tutorial01/
     path("admin/", admin.site.urls),

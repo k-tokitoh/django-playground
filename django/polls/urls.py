@@ -2,6 +2,10 @@ from django.urls import path
 
 from . import views
 
+# includeでnamespaceを指定してインスタンス名前空間を与えるためには、前提としてapp_nameでアプリケーション名を指定する必要がある
+# Specifying a namespace in include() without providing an app_name is not supported.
+app_name = "polls"
+
 urlpatterns = [
     # ex: /polls/
     path("", views.index, name="index"),
