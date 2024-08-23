@@ -1,4 +1,4 @@
-# pull official base image
+# fargateで動くようにplatformを指定する
 FROM --platform=linux/amd64 python:3.11.5-slim-bookworm
 
 # set work directory
