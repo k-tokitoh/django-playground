@@ -1,5 +1,5 @@
 # pull official base image
-FROM python:3.11.5-slim-bookworm
+FROM --platform=linux/amd64 python:3.11.5-slim-bookworm
 
 # set work directory
 WORKDIR /usr/src/app
@@ -12,3 +12,7 @@ RUN pip install -r requirements.txt
 
 # copy project
 COPY ./awesome-django-project .
+
+EXPOSE 80
+
+CMD ["gunicorn", "wsgi", "--bind", "0.0.0.0:80"]
