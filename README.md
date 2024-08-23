@@ -1,8 +1,9 @@
 ### サーバ起動
 
-```
-python manage.py runserver
-```
+- 同梱された簡易サーバ
+  - `python manage.py runserver`
+- gunicorn
+  - `gunicorn wsgi`
 
 ### パッケージ追加
 

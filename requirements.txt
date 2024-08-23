@@ -8,5 +8,9 @@ asgiref==3.8.1
     # via django
 django==5.1
     # via -r requirements.in
+gunicorn==23.0.0
+    # via -r requirements.in
+packaging==24.1
+    # via gunicorn
 sqlparse==0.5.1
     # via django
