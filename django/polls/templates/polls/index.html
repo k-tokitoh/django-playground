@@ -1,3 +1,7 @@
+<!-- loadによって、指定したタグを読み込んで利用可能にする -->
+{% load static %}
+<link rel="stylesheet" href="{% static 'polls/style.css' %}" />
+
 {% if latest_question_list %}
 <ul>
   {% for question in latest_question_list %}
