@@ -7,7 +7,7 @@ import sys
 def main():
     """Run administrative tasks."""
     # DJANGO_SETTINGS_MODULE という環境変数で、どの設定ファイルを利用するか指定するが、未指定の場合のデフォルト値を以下にする
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "mysite.settings.development")
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "settings.development")
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:
@@ -19,5 +19,5 @@ def main():
     execute_from_command_line(sys.argv)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
