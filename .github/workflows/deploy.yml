@@ -9,7 +9,7 @@ env:
   AWS_REGION: us-east-1
   ECR_REPOSITORY: django-playground
   ECS_SERVICE: django-playground
-  ECS_CLUSTER: django-playground
+  ECS_CLUSTER: djangoPlayground-dev-ecsCluster
   ECS_TASK_DEFINITION: task-definition.json
   CONTAINER_NAME: django-playground
 
