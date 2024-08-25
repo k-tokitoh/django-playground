@@ -6,7 +6,7 @@ on:
       - main
 
 env:
-  AWS_REGION: ap-northeast-1
+  AWS_REGION: us-east-1
   ECR_REPOSITORY: django-playground
   ECS_SERVICE: django-playground
   ECS_CLUSTER: django-playground
