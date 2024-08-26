@@ -9,16 +9,28 @@ services:
       MYSQL_USER: django
       MYSQL_PASSWORD: django
       TZ: "Asia/Tokyo"
-      # 4byteのマルチバイト文字を扱えるcharacter set / 日本語用のひらがなとカタカナを区別するcollation
+    ports:
+      - "3306:3306"
+
+    # 4byteのマルチバイト文字を扱えるcharacter set / 日本語用のひらがなとカタカナを区別するcollation
     command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_ja_0900_as_cs_ks
+
+    # web depends_on db とするだけだと、コンテナが立ち上がった段階で接続しようとするので、healthcheckを使って接続可能になるのを待つ
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "db", "-u", "root", "-proot"]
+      interval: 5s
+      timeout: 10s
+      retries: 5
 
   web:
     build:
       dockerfile: Dockerfile.local
     volumes:
+      # host:container
       - ./awesome-django-project:/code
     working_dir: /code
     ports:
       - "8000:8000"
     depends_on:
-      - db
+      db:
+        condition: service_healthy

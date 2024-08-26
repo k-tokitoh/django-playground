@@ -1,7 +1,6 @@
 .venv/
 .history/
 __pycache__/
-db.sqlite3
 
 # terraform
 .terraform/
