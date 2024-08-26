@@ -50,17 +50,6 @@ module "alb" {
   alb_security_group_id = module.network.alb_security_group_id
 }
 
-module "ecs" {
-  source = "../../modules/ecs"
-
-  project               = var.project
-  environment           = var.environment
-  vpc_id                = module.network.vpc_id
-  public_subnet_ids     = module.network.public_subnet_ids
-  ecs_security_group_id = module.network.ecs_security_group_id
-  alb_target_group_arn  = module.alb.target_group_arn
-}
-
 module "rds" {
   source = "../../modules/rds"
 
@@ -68,4 +57,20 @@ module "rds" {
   environment          = var.environment
   private_subnet_ids   = module.network.private_subnet_ids
   db_security_group_id = module.network.db_security_group_id
+}
+
+module "ecs" {
+  source = "../../modules/ecs"
+
+  project                             = var.project
+  environment                         = var.environment
+  vpc_id                              = module.network.vpc_id
+  public_subnet_ids                   = module.network.public_subnet_ids
+  ecs_security_group_id               = module.network.ecs_security_group_id
+  alb_target_group_arn                = module.alb.target_group_arn
+  database_host_ssm_parameter_arn     = module.rds.database_host_ssm_parameter_arn
+  database_port_ssm_parameter_arn     = module.rds.database_port_ssm_parameter_arn
+  database_name_ssm_parameter_arn     = module.rds.database_name_ssm_parameter_arn
+  database_username_ssm_parameter_arn = module.rds.database_username_ssm_parameter_arn
+  database_password_ssm_parameter_arn = module.rds.database_password_ssm_parameter_arn
 }

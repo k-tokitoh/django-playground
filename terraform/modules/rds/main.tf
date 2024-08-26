@@ -107,7 +107,7 @@ resource "aws_db_instance" "default" {
   vpc_security_group_ids = [var.db_security_group_id]
   publicly_accessible    = false
   port                   = 3306
-  db_name                = "terraformTutorial"
+  db_name                = "djangoPlayground"
   parameter_group_name   = aws_db_parameter_group.default.name
   option_group_name      = aws_db_option_group.default.name
 
@@ -132,4 +132,42 @@ resource "aws_db_instance" "default" {
     Project = var.project
     Env     = var.environment
   }
+}
+
+
+# ==========================================================================================================================
+# parameter store
+# ==========================================================================================================================
+
+resource "aws_ssm_parameter" "database_host" {
+  name = "/${var.project}/${var.environment}/DATABASE_HOST"
+
+  # 平文の文字列なら"String", 暗号化された文字列なら"SecureString"
+  type = "String"
+
+  value = aws_db_instance.default.address
+}
+
+resource "aws_ssm_parameter" "database_port" {
+  name  = "/${var.project}/${var.environment}/DATABASE_PORT"
+  type  = "String"
+  value = aws_db_instance.default.port
+}
+
+resource "aws_ssm_parameter" "database_name" {
+  name  = "/${var.project}/${var.environment}/DATABASE_NAME"
+  type  = "String"
+  value = aws_db_instance.default.db_name
+}
+
+resource "aws_ssm_parameter" "database_username" {
+  name  = "/${var.project}/${var.environment}/DATABASE_USERNAME"
+  type  = "SecureString"
+  value = aws_db_instance.default.username
+}
+
+resource "aws_ssm_parameter" "database_password" {
+  name  = "/${var.project}/${var.environment}/DATABASE_PASSWORD"
+  type  = "SecureString"
+  value = aws_db_instance.default.password
 }

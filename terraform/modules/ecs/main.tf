@@ -86,7 +86,7 @@ resource "aws_ecs_task_definition" "main" {
   memory                   = "3072"
 
   # タスクを起動するときに権限が必要
-  execution_role_arn = "arn:aws:iam::470855045134:role/ecsTaskExecutionRole"
+  execution_role_arn = data.aws_iam_role.ecs_task_execution.arn
 
   runtime_platform {
     cpu_architecture        = "X86_64"
@@ -104,6 +104,70 @@ resource "aws_ecs_task_definition" "main" {
           hostPort      = 80
         }
       ]
+      secrets = [
+        {
+          name      = "DATABASE_HOST"
+          valueFrom = var.database_host_ssm_parameter_arn
+        },
+        {
+          name      = "DATABASE_PORT"
+          valueFrom = var.database_port_ssm_parameter_arn
+        },
+        {
+          name      = "DATABASE_NAME"
+          valueFrom = var.database_name_ssm_parameter_arn
+        },
+        {
+          name      = "DATABASE_USERNAME"
+          valueFrom = var.database_username_ssm_parameter_arn
+        },
+        {
+          name      = "DATABASE_PASSWORD"
+          valueFrom = var.database_password_ssm_parameter_arn
+        },
+      ]
     }
   ])
+}
+
+
+# ==========================================================================================================================
+# role
+# ==========================================================================================================================
+
+# ecs実行ロール（aws管理）
+data "aws_iam_role" "ecs_task_execution" {
+  name = "ecsTaskExecutionRole"
+}
+
+# parameter storeからDB接続情報を取得できるpolicy
+resource "aws_iam_policy" "get_parameter_store" {
+  name        = "CustomSSMPolicy"
+  description = "Policy for accessing SSM parameters for ECS tasks"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = [
+          "ssm:GetParameter",
+          "ssm:GetParameters"
+        ]
+        Effect = "Allow"
+        Resource = [
+          var.database_host_ssm_parameter_arn,
+          var.database_port_ssm_parameter_arn,
+          var.database_name_ssm_parameter_arn,
+          var.database_username_ssm_parameter_arn,
+          var.database_password_ssm_parameter_arn
+        ]
+      }
+    ]
+  })
+}
+
+# parameter storeからDB接続情報を取得できるpolicyを、デフォルトのecs実行ロールに付け加える
+resource "aws_iam_role_policy_attachment" "ecs_task_execution__get_parameter_store" {
+  role       = data.aws_iam_role.ecs_task_execution.name
+  policy_arn = aws_iam_policy.get_parameter_store.arn
 }
