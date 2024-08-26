@@ -12,10 +12,14 @@ env:
   ECS_CLUSTER: djangoPlayground-dev
   ECS_SERVICE: djangoPlayground-dev-app
   TASK_DEFINITION_APP: djangoPlayground-dev-app
+  TASK_DEFINITION_MIGRATION: djangoPlayground-dev-migration
+
   CONTAINER_APP_MAIN: djangoPlayground-dev-app-main
+  CONTAINER_MIGRATION_MAIN: djangoPlayground-dev-migration-main
 
   # 一時的にタスク定義の内容を表現するjsonファイルの名前
   ECS_TASK_DEFINITION_APP: task-definition-app.json
+  ECS_TASK_DEFINITION_MIGRATION: task-definition-migration.json
 
 jobs:
   deploy:
@@ -47,6 +51,29 @@ jobs:
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG . -f Dockerfile.prod
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+      ################################# migration
+
+      - name: Download task definition for migration
+        run: |
+          aws ecs describe-task-definition --task-definition ${{ env.TASK_DEFINITION_MIGRATION }} --query taskDefinition > ${{ env.ECS_TASK_DEFINITION_MIGRATION }}
+
+      - name: Fill in the new image ID in the Amazon ECS task definition for migration
+        id: task-def-migration
+        uses: aws-actions/amazon-ecs-render-task-definition@c804dfbdd57f713b6c079302a4c01db7017a36fc
+        with:
+          task-definition: ${{ env.ECS_TASK_DEFINITION_MIGRATION }}
+          container-name: ${{ env.CONTAINER_MIGRATION_MAIN }}
+          image: ${{ steps.build-image.outputs.image }}
+
+      - name: Deploy Amazon ECS task definition for migration
+        uses: aws-actions/amazon-ecs-deploy-task-definition@df9643053eda01f169e64a0e60233aacca83799a
+        with:
+          task-definition: ${{ steps.task-def-migration.outputs.task-definition }}
+          cluster: ${{ env.ECS_CLUSTER }}
+          wait-for-service-stability: true
+
+      ################################# app
 
       - name: Download task definition for application
         run: |
