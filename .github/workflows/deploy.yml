@@ -6,12 +6,15 @@ on:
       - main
 
 env:
+  # terraformでのタスク定義の記述と一致する必要がある
   AWS_REGION: us-east-1
   ECR_REPOSITORY: django-playground
   ECS_SERVICE: django-playground
   ECS_CLUSTER: djangoPlayground-dev-ecsCluster
-  ECS_TASK_DEFINITION: task-definition.json
-  CONTAINER_NAME: django-playground
+  CONTAINER_NAME_APP: django-playground-app
+
+  # 一時的にタスク定義の内容を表現するjsonファイルを保存するpath
+  ECS_TASK_DEFINITION_APP: task-definition/app.json
 
 jobs:
   deploy:
@@ -44,22 +47,22 @@ jobs:
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
 
-      - name: Download task definition
+      - name: Download task definition for application
         run: |
-          aws ecs describe-task-definition --task-definition ${{ env.CONTAINER_NAME }} --query taskDefinition > ${{ env.ECS_TASK_DEFINITION }}
+          aws ecs describe-task-definition --task-definition ${{ env.CONTAINER_NAME_APP }} --query taskDefinition > ${{ env.ECS_TASK_DEFINITION_APP }}
 
-      - name: Fill in the new image ID in the Amazon ECS task definition
-        id: task-def
+      - name: Fill in the new image ID in the Amazon ECS task definition for application
+        id: task-def-app
         uses: aws-actions/amazon-ecs-render-task-definition@c804dfbdd57f713b6c079302a4c01db7017a36fc
         with:
-          task-definition: ${{ env.ECS_TASK_DEFINITION }}
-          container-name: ${{ env.CONTAINER_NAME }}
+          task-definition: ${{ env.ECS_TASK_DEFINITION_APP }}
+          container-name: ${{ env.CONTAINER_NAME_APP }}
           image: ${{ steps.build-image.outputs.image }}
 
-      - name: Deploy Amazon ECS task definition
+      - name: Deploy Amazon ECS task definition for application
         uses: aws-actions/amazon-ecs-deploy-task-definition@df9643053eda01f169e64a0e60233aacca83799a
         with:
-          task-definition: ${{ steps.task-def.outputs.task-definition }}
+          task-definition: ${{ steps.task-def-app.outputs.task-definition }}
           service: ${{ env.ECS_SERVICE }}
           cluster: ${{ env.ECS_CLUSTER }}
           wait-for-service-stability: true

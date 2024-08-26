@@ -1,9 +1,14 @@
+locals {
+  service_name             = var.project
+  task_definition_name_app = "${local.service_name}-app"
+}
+
 # ==========================================================================================================================
 # ECR
 # ==========================================================================================================================
 
 resource "aws_ecr_repository" "default" {
-  name = "django-playground"
+  name = var.project
 
   # イメージのタグを後から変更可能にするかどうか
   # たぶん、CIからイメージをpushするときにリビジョンを更新するためにMUTABLEな必要がある
@@ -36,10 +41,6 @@ resource "aws_ecs_cluster" "default" {
 # service
 # ==========================================================================================================================
 
-locals {
-  service_name = "django-playground"
-}
-
 resource "aws_ecs_service" "default" {
   name    = local.service_name
   cluster = aws_ecs_cluster.default.id
@@ -64,7 +65,7 @@ resource "aws_ecs_service" "default" {
     assign_public_ip = true
   }
 
-  task_definition = aws_ecs_task_definition.main.arn
+  task_definition = aws_ecs_task_definition.app.arn
 
   # CIからデプロイのたびにタスク定義は更新される（新しいimageを参照する）
   # terraformがタスク定義を管理しつづけていると「タスク定義が変更されちゃった！戻さなきゃ」になってしまうので、タスク定義の変更は無視するよう設定する
@@ -78,8 +79,8 @@ resource "aws_ecs_service" "default" {
 # task definition
 # ==========================================================================================================================
 
-resource "aws_ecs_task_definition" "main" {
-  family                   = "django-playground"
+resource "aws_ecs_task_definition" "app" {
+  family                   = local.task_definition_name_app
   network_mode             = "awsvpc"
   requires_compatibilities = ["FARGATE"]
   cpu                      = "1024"
@@ -93,9 +94,12 @@ resource "aws_ecs_task_definition" "main" {
     operating_system_family = "LINUX"
   }
 
+  # ひとつのタスクは、ひとつのEC2や、相当するfargate環境上で実行される。
+  # ひとつのタスクの中で、複数のコンテナを立ち上げることができる。
+  # アプリケーション自体と、ログ送信のためのコンテナなど。
   container_definitions = jsonencode([
     {
-      name      = "django-playground"
+      name      = "${local.task_definition_name_app}-main"
       image     = "nginx:latest" # 仮のイメージを指定する。後からCIによって適切なイメージを指定した新しいリビジョンが積まれる
       essential = true
       portMappings = [
