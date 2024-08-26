@@ -43,9 +43,13 @@ resource "aws_ecs_cluster" "default" {
 
 locals {
   # workerができたら-app/-workerとかで区別する
-  service_app                         = "${local.cluster_name}-app"
-  task_definition_app                 = local.service_app
-  task_definition_app__container_main = "${local.task_definition_app}-main"
+  service_app = "${local.cluster_name}-app"
+
+  task_definition_app       = "${local.cluster_name}-app"
+  task_definition_migration = "${local.cluster_name}-migration"
+
+  task_definition_app__container_main       = "${local.task_definition_app}-main"
+  task_definition_migration__container_main = "${local.task_definition_migration}-main"
 }
 
 resource "aws_ecs_service" "app" {
@@ -104,48 +108,41 @@ resource "aws_ecs_task_definition" "app" {
   # ひとつのタスクは、ひとつのEC2や、相当するfargate環境上で実行される。
   # ひとつのタスクの中で、複数のコンテナを立ち上げることができる。
   # アプリケーション自体と、ログ送信のためのコンテナなど。
-  container_definitions = jsonencode([
-    {
-      name      = local.task_definition_app__container_main
-      image     = "nginx:latest" # 仮のイメージを指定する。後からCIによって適切なイメージを指定した新しいリビジョンが積まれる
-      essential = true
-      portMappings = [
-        {
-          containerPort = 80
-          hostPort      = 80
-        }
-      ]
-      environment = [
-        {
-          # settings/pruduction.pyを読み込むよう指定する
-          name  = "DJANGO_SETTINGS_MODULE"
-          value = "settings.production"
-        },
-      ]
-      secrets = [
-        {
-          name      = "DATABASE_HOST"
-          valueFrom = var.database_host_ssm_parameter_arn
-        },
-        {
-          name      = "DATABASE_PORT"
-          valueFrom = var.database_port_ssm_parameter_arn
-        },
-        {
-          name      = "DATABASE_NAME"
-          valueFrom = var.database_name_ssm_parameter_arn
-        },
-        {
-          name      = "DATABASE_USERNAME"
-          valueFrom = var.database_username_ssm_parameter_arn
-        },
-        {
-          name      = "DATABASE_PASSWORD"
-          valueFrom = var.database_password_ssm_parameter_arn
-        },
-      ]
-    }
-  ])
+
+  # fileだとjsonを読み込むだけだが、templatefileだと変数を渡すことができる
+  container_definitions = templatefile("${path.module}/task_definitions.json", {
+    name              = local.task_definition_app__container_main,
+    database_host     = var.database_host_ssm_parameter_arn,
+    database_port     = var.database_port_ssm_parameter_arn,
+    database_name     = var.database_name_ssm_parameter_arn,
+    database_username = var.database_username_ssm_parameter_arn,
+    database_password = var.database_password_ssm_parameter_arn
+  })
+}
+
+resource "aws_ecs_task_definition" "migration" {
+  family                   = local.task_definition_migration
+  network_mode             = "awsvpc"
+  requires_compatibilities = ["FARGATE"]
+  cpu                      = "1024"
+  memory                   = "3072"
+
+  # タスクを起動するときに権限が必要
+  execution_role_arn = data.aws_iam_role.ecs_task_execution.arn
+
+  runtime_platform {
+    cpu_architecture        = "X86_64"
+    operating_system_family = "LINUX"
+  }
+
+  container_definitions = templatefile("${path.module}/task_definitions.json", {
+    name              = local.task_definition_migration__container_main,
+    database_host     = var.database_host_ssm_parameter_arn,
+    database_port     = var.database_port_ssm_parameter_arn,
+    database_name     = var.database_name_ssm_parameter_arn,
+    database_username = var.database_username_ssm_parameter_arn,
+    database_password = var.database_password_ssm_parameter_arn
+  })
 }
 
 

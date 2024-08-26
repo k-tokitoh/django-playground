@@ -11,7 +11,8 @@ env:
   ECR_REPOSITORY: django-playground
   ECS_CLUSTER: djangoPlayground-dev
   ECS_SERVICE: djangoPlayground-dev-app
-  CONTAINER_NAME_APP: djangoPlayground-app-main
+  TASK_DEFINITION_APP: djangoPlayground-dev-app
+  CONTAINER_APP_MAIN: djangoPlayground-dev-app-main
 
   # 一時的にタスク定義の内容を表現するjsonファイルの名前
   ECS_TASK_DEFINITION_APP: task-definition-app.json
@@ -49,14 +50,14 @@ jobs:
 
       - name: Download task definition for application
         run: |
-          aws ecs describe-task-definition --task-definition ${{ env.CONTAINER_NAME_APP }} --query taskDefinition > ${{ env.ECS_TASK_DEFINITION_APP }}
+          aws ecs describe-task-definition --task-definition ${{ env.TASK_DEFINITION_APP }} --query taskDefinition > ${{ env.ECS_TASK_DEFINITION_APP }}
 
       - name: Fill in the new image ID in the Amazon ECS task definition for application
         id: task-def-app
         uses: aws-actions/amazon-ecs-render-task-definition@c804dfbdd57f713b6c079302a4c01db7017a36fc
         with:
           task-definition: ${{ env.ECS_TASK_DEFINITION_APP }}
-          container-name: ${{ env.CONTAINER_NAME_APP }}
+          container-name: ${{ env.CONTAINER_APP_MAIN }}
           image: ${{ steps.build-image.outputs.image }}
 
       - name: Deploy Amazon ECS task definition for application

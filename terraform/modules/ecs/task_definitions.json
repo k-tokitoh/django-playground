@@ -1,0 +1,42 @@
+[
+  {
+    "name": "${name}",
+    "//": "仮のイメージでタスク定義を作成しておく。CIから適切なイメージを指定したrevisionを作成するはず。",
+    "image": "nginx:latest",
+    "essential": true,
+    "portMappings": [
+      {
+        "containerPort": 80,
+        "hostPort": 80
+      }
+    ],
+    "environment": [
+      {
+        "name": "DJANGO_SETTINGS_MODULE",
+        "value": "settings.production"
+      }
+    ],
+    "secrets": [
+      {
+        "name": "DATABASE_HOST",
+        "valueFrom": "${database_host}"
+      },
+      {
+        "name": "DATABASE_PORT",
+        "valueFrom": "${database_port}"
+      },
+      {
+        "name": "DATABASE_NAME",
+        "valueFrom": "${database_name}"
+      },
+      {
+        "name": "DATABASE_USERNAME",
+        "valueFrom": "${database_username}"
+      },
+      {
+        "name": "DATABASE_PASSWORD",
+        "valueFrom": "${database_password}"
+      }
+    ]
+  }
+]
