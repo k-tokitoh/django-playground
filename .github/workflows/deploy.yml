@@ -75,6 +75,9 @@ jobs:
 
       - name: Run Amazon ECS to migrate database
         run: |
+          LATEST_REVISION=$(
+            aws ecs list-task-definitions --region ${{ env.AWS_REGION }} | jq -r '.taskDefinitionArns[]' | grep ${{ env.TASK_DEFINITION_MIGRATION }} | tail -n1
+          )
           NETWORK_CONFIG=$(
             aws ecs describe-services \
               --region ${{ env.AWS_REGION }} \
@@ -82,7 +85,7 @@ jobs:
               --services ${{ env.ECS_SERVICE }} | jq '.services[0].networkConfiguration'
           )
           aws ecs run-task
-            --task-definition '${{ env.TASK_DEFINITION_MIGRATION }}'
+            --task-definition $LATEST_REVISION
             --region ${{ env.AWS_REGION }}
             --launch-type FARGATE
             --cluster '${{ env.ECS_CLUSTER }}'
