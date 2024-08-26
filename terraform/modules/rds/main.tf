@@ -74,7 +74,8 @@ resource "aws_db_instance" "default" {
 
   identifier = "${lower(var.project)}-${lower(var.environment)}-mysqlinstance"
 
-  username = "name"
+  # マスターユーザーの名前
+  username = "root"
 
   # random stringはtfstateに平文で保存されてしまう
   # - 対策1 <= 今回はこちら
@@ -83,6 +84,8 @@ resource "aws_db_instance" "default" {
   #   - terraformを実行する人を、パスワードを知っていていい人に限定しない
   #   - terraformの実行後に、terraform外から（aws cliなどにより）パスワードを変更する
   #   - terraform上ではlifecycleの指定によって、terraformで管理されたstateと異なることが許容されるようにする
+
+  # マスターユーザーのパスワード
   password = random_string.rds_password.result
 
   instance_class = "db.t3.micro"
@@ -161,8 +164,9 @@ resource "aws_ssm_parameter" "database_name" {
 }
 
 resource "aws_ssm_parameter" "database_username" {
-  name  = "/${var.project}/${var.environment}/DATABASE_USERNAME"
-  type  = "SecureString"
+  name = "/${var.project}/${var.environment}/DATABASE_USERNAME"
+  # type  = "SecureString"
+  type  = "String"
   value = aws_db_instance.default.username
 }
 

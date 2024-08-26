@@ -106,6 +106,7 @@ resource "aws_ecs_task_definition" "main" {
       ]
       environment = [
         {
+          # settings/pruduction.pyを読み込むよう指定する
           name  = "DJANGO_SETTINGS_MODULE"
           value = "settings.production"
         },
