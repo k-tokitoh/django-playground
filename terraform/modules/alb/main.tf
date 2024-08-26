@@ -19,10 +19,28 @@ resource "aws_lb" "default" {
 }
 
 # HTTPをport:80で受け付ける
+# cloudfrontでhttpsでのリダイレクトを強制するようにしたら、ALBまではhttpsが到達しないはずだから、httpリスナーは不要かもしれない
 resource "aws_lb_listener" "alb_listener_http" {
   load_balancer_arn = aws_lb.default.arn
   port              = 80
   protocol          = "HTTP"
+
+  default_action {
+    # そのまま転送するよ
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.default.arn
+  }
+}
+
+# ALBでSSL終端するとはすなわち、ALBのhttpsリスナーにACMを登録すること！！
+resource "aws_lb_listener" "alb_listener_https" {
+  load_balancer_arn = aws_lb.default.arn
+  port              = 443
+  protocol          = "HTTPS"
+
+  # see: https://www.youtube.com/watch?v=2QHdvEHN050
+  ssl_policy      = "ELBSecurityPolicy-TLS13-1-2-2021-06"
+  certificate_arn = var.certificate_arn
 
   default_action {
     # そのまま転送するよ
@@ -77,5 +95,27 @@ resource "aws_lb_target_group" "default" {
     Name        = "${var.project}-${var.environment}-albTargetGroup"
     Project     = var.project
     Environment = var.environment
+  }
+}
+
+
+# ==========================================================================================================================
+# route53
+# ==========================================================================================================================
+
+# SSL証明はドメインに対する証明である
+# なのでSSL終端（ここではALB）はドメインを割り当てられている必要がある
+resource "aws_route53_record" "alb" {
+  zone_id = var.route53_zone_id
+  name    = "django-playground-${var.environment}-alb.${var.domain}"
+
+  # Aレコードはipアドレス/AWSリソースいずれかを指定できる
+  type = "A"
+  alias {
+    name    = aws_lb.default.dns_name
+    zone_id = aws_lb.default.zone_id
+
+    # ヘルスチェックをするかどうか
+    evaluate_target_health = true
   }
 }

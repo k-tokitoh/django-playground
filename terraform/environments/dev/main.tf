@@ -40,6 +40,21 @@ module "network" {
   environment = var.environment
 }
 
+module "route53" {
+  source = "../../modules/route53"
+
+  project     = var.project
+  environment = var.environment
+}
+
+module "acm" {
+  source = "../../modules/acm"
+
+  project     = var.project
+  environment = var.environment
+  domain      = module.route53.domain
+}
+
 module "alb" {
   source = "../../modules/alb"
 
@@ -48,6 +63,9 @@ module "alb" {
   vpc_id                = module.network.vpc_id
   public_subnet_ids     = module.network.public_subnet_ids
   alb_security_group_id = module.network.alb_security_group_id
+  domain                = module.route53.domain
+  route53_zone_id       = module.route53.zone_id
+  certificate_arn       = module.acm.certificate_arn
 }
 
 module "rds" {
@@ -73,12 +91,4 @@ module "ecs" {
   database_name_ssm_parameter_arn     = module.rds.database_name_ssm_parameter_arn
   database_username_ssm_parameter_arn = module.rds.database_username_ssm_parameter_arn
   database_password_ssm_parameter_arn = module.rds.database_password_ssm_parameter_arn
-}
-
-module "route53" {
-  source = "../../modules/route53"
-
-  project     = var.project
-  environment = var.environment
-  alb         = module.alb.alb
 }

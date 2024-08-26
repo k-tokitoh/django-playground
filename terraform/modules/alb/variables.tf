@@ -17,3 +17,15 @@ variable "public_subnet_ids" {
 variable "alb_security_group_id" {
   type = string
 }
+
+variable "certificate_arn" {
+  type = string
+}
+
+variable "domain" {
+  type = string
+}
+
+variable "route53_zone_id" {
+  type = string
+}
