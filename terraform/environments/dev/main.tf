@@ -60,3 +60,12 @@ module "ecs" {
   ecs_security_group_id = module.network.ecs_security_group_id
   alb_target_group_arn  = module.alb.target_group_arn
 }
+
+module "rds" {
+  source = "../../modules/rds"
+
+  project              = var.project
+  environment          = var.environment
+  private_subnet_ids   = module.network.private_subnet_ids
+  db_security_group_id = module.network.db_security_group_id
+}

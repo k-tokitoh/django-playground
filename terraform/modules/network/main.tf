@@ -81,6 +81,49 @@ resource "aws_subnet" "public_1b" {
   }
 }
 
+resource "aws_subnet" "private_1a" {
+  vpc_id            = aws_vpc.default.id
+  availability_zone = "us-east-1a"
+
+  # VPCに当てたcidr blockは下位12bitがホスト部だった
+  # そのうち上位4bitをサブネットの指定のために利用し、下位8bitをサブネット内で利用可能なアドレスとして利用する
+  # NNNN NNNN . NNNN NNNN . NNNN SSSS . HHHH HHHH
+  # 1100 0000 . 1010 1000 . 0000 0011 . xxxx xxxx
+  cidr_block = "192.168.3.0/24"
+
+  # サブネット内のec2に対して、デフォルトでpublic ip addressを割り当てるかどうか
+  map_public_ip_on_launch = false
+
+  tags = {
+    Name    = "${var.project}-${var.environment}-privateSubnet1a"
+    Project = var.project
+    Env     = var.environment
+    Type    = "private"
+  }
+}
+
+resource "aws_subnet" "private_1b" {
+  vpc_id            = aws_vpc.default.id
+  availability_zone = "us-east-1b"
+
+  # VPCに当てたcidr blockは下位12bitがホスト部だった
+  # そのうち上位4bitをサブネットの指定のために利用し、下位8bitをサブネット内で利用可能なアドレスとして利用する
+  # NNNN NNNN . NNNN NNNN . NNNN SSSS . HHHH HHHH
+  # 1100 0000 . 1010 1000 . 0000 0100 . xxxx xxxx
+  cidr_block = "192.168.4.0/24"
+
+  # サブネット内のec2に対して、デフォルトでpublic ip addressを割り当てるかどうか
+  map_public_ip_on_launch = false
+
+  tags = {
+    Name    = "${var.project}-${var.environment}-privateSubnet1c"
+    Project = var.project
+    Env     = var.environment
+    Type    = "private"
+  }
+}
+
+
 # ==========================================================================================================================
 # route table
 # ==========================================================================================================================
@@ -223,3 +266,30 @@ resource "aws_security_group_rule" "ecs_out_https" {
   to_port     = 0
   cidr_blocks = ["0.0.0.0/0"]
 }
+
+################################################################################### db
+
+resource "aws_security_group" "db" {
+  name        = "${var.project}-${var.environment}-dbSecurityGroup"
+  description = "security group for db"
+
+  vpc_id = aws_vpc.default.id
+
+  tags = {
+    Name    = "${var.project}-${var.environment}-dbSecurityGroup"
+    Project = var.project
+    Env     = var.environment
+  }
+}
+
+resource "aws_security_group_rule" "db_in_tcp3306" {
+  security_group_id = aws_security_group.db.id
+
+  type      = "ingress"
+  protocol  = "tcp"
+  from_port = 3306
+  to_port   = 3306
+
+  source_security_group_id = aws_security_group.ecs.id
+}
+
