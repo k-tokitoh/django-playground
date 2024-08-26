@@ -73,37 +73,14 @@ jobs:
           cluster: ${{ env.ECS_CLUSTER }}
           wait-for-service-stability: true
 
-      - name: Get latest task definition revision
-        id: get_latest_revision
+      - name: Run Amazon ECS to migrate database
+        # `run: |`だと各行が別のコマンドとして実行できる
+        # 以前はバックスラッシュが使えていたらしいが、いまはつかえないことに注意
+        # see: https://docs.github.com/ja/enterprise-cloud@latest/actions/writing-workflows/workflow-syntax-for-github-actions#jobsjob_idstepsrun
         run: |
           LATEST_REVISION=$(aws ecs list-task-definitions --region ${{ env.AWS_REGION }} | jq -r '.taskDefinitionArns[]' | grep ${{ env.TASK_DEFINITION_MIGRATION }} | tail -n1)
-          echo "LATEST_REVISION=$LATEST_REVISION" >> $GITHUB_OUTPUT
-
-      - name: Get network configuration
-        id: get_network_config
-        run: |
-          NETWORK_CONFIG=$(aws ecs describe-services
-            --region ${{ env.AWS_REGION }}
-            --cluster ${{ env.ECS_CLUSTER }}
-            --services ${{ env.ECS_SERVICE }} | jq -r '.services[0].networkConfiguration')
-          echo "NETWORK_CONFIG=$(echo $NETWORK_CONFIG | jq -c .)" >> $GITHUB_OUTPUT
-
-      - name: Run Amazon ECS to migrate database
-        run: |
-          aws ecs run-task
-            --task-definition ${{ steps.get_latest_revision.outputs.LATEST_REVISION }}
-            --region ${{ env.AWS_REGION }}
-            --launch-type FARGATE
-            --cluster '${{ env.ECS_CLUSTER }}'
-            --overrides '{
-              "containerOverrides": [
-                {
-                  "name": "${{ env.CONTAINER_MIGRATION_MAIN }}",
-                  "command": ["python", "manage.py", "migrate"]
-                }
-              ]
-            }'
-            --network-configuration "$NETWORK_CONFIG"
+          NETWORK_CONFIG=$(aws ecs describe-services --region ${{ env.AWS_REGION }} --cluster ${{ env.ECS_CLUSTER }} --services ${{ env.ECS_SERVICE }} | jq -r '.services[0].networkConfiguration' | jq -c .)
+          aws ecs run-task --region ${{ env.AWS_REGION }} --launch-type FARGATE --cluster '${{ env.ECS_CLUSTER }}' --task-definition $LATEST_REVISION --network-configuration $NETWORK_CONFIG --overrides '{"containerOverrides": [{"name": "${{ env.CONTAINER_MIGRATION_MAIN }}", "command": ["python", "manage.py", "migrate"]}]}'
 
       ################################# app
 
