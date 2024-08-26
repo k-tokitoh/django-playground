@@ -72,22 +72,6 @@ TEMPLATES = [
 WSGI_APPLICATION = "wsgi.application"
 
 
-# Database
-# https://docs.djangoproject.com/en/5.1/ref/settings/#databases
-
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.mysql",
-        # docker-compose.ymlでの設定と一致させる
-        "NAME": "database",
-        "USER": "django",
-        "PASSWORD": "django",
-        "HOST": "db",
-        "PORT": "3306",
-    }
-}
-
-
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
 
