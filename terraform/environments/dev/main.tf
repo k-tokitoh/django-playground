@@ -74,3 +74,11 @@ module "ecs" {
   database_username_ssm_parameter_arn = module.rds.database_username_ssm_parameter_arn
   database_password_ssm_parameter_arn = module.rds.database_password_ssm_parameter_arn
 }
+
+module "route53" {
+  source = "../../modules/route53"
+
+  project     = var.project
+  environment = var.environment
+  alb         = module.alb.alb
+}
