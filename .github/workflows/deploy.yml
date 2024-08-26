@@ -73,6 +73,29 @@ jobs:
           cluster: ${{ env.ECS_CLUSTER }}
           wait-for-service-stability: true
 
+      - name: Run Amazon ECS to migrate database
+        run: |
+          NETWORK_CONFIG=$(
+            aws ecs describe-services \
+              --region ${{ env.AWS_REGION }} \
+              --cluster ${{ env.ECS_CLUSTER }} \
+              --services ${{ env.ECS_SERVICE }} | jq '.services[0].networkConfiguration'
+          )
+          aws ecs run-task
+            --task-definition '${{ env.TASK_DEFINITION_MIGRATION }}'
+            --region ${{ env.AWS_REGION }}
+            --launch-type FARGATE
+            --cluster '${{ env.ECS_CLUSTER }}'
+            --overrides '{
+              "containerOverrides": [
+                {
+                  "name": "${{ env.CONTAINER_MIGRATION_MAIN }}",
+                  "command": ["python", "manage.py", "migrate"]
+                }
+              ]
+            }'
+            --network-configuration "$NETWORK_CONFIG"
+
       ################################# app
 
       - name: Download task definition for application
