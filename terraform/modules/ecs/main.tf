@@ -104,6 +104,12 @@ resource "aws_ecs_task_definition" "main" {
           hostPort      = 80
         }
       ]
+      environment = [
+        {
+          name  = "DJANGO_SETTINGS_MODULE"
+          value = "settings.production"
+        },
+      ]
       secrets = [
         {
           name      = "DATABASE_HOST"
