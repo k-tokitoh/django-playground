@@ -73,19 +73,25 @@ jobs:
           cluster: ${{ env.ECS_CLUSTER }}
           wait-for-service-stability: true
 
+      - name: Get latest task definition revision
+        id: get_latest_revision
+        run: |
+          LATEST_REVISION=$(aws ecs list-task-definitions --region ${{ env.AWS_REGION }} | jq -r '.taskDefinitionArns[]' | grep ${{ env.TASK_DEFINITION_MIGRATION }} | tail -n1)
+          echo "LATEST_REVISION=$LATEST_REVISION" >> $GITHUB_OUTPUT
+
+      - name: Get network configuration
+        id: get_network_config
+        run: |
+          NETWORK_CONFIG=$(aws ecs describe-services
+            --region ${{ env.AWS_REGION }}
+            --cluster ${{ env.ECS_CLUSTER }}
+            --services ${{ env.ECS_SERVICE }} | jq -r '.services[0].networkConfiguration')
+          echo "NETWORK_CONFIG=$(echo $NETWORK_CONFIG | jq -c .)" >> $GITHUB_OUTPUT
+
       - name: Run Amazon ECS to migrate database
         run: |
-          LATEST_REVISION=$(
-            aws ecs list-task-definitions --region ${{ env.AWS_REGION }} | jq -r '.taskDefinitionArns[]' | grep ${{ env.TASK_DEFINITION_MIGRATION }} | tail -n1
-          )
-          NETWORK_CONFIG=$(
-            aws ecs describe-services \
-              --region ${{ env.AWS_REGION }} \
-              --cluster ${{ env.ECS_CLUSTER }} \
-              --services ${{ env.ECS_SERVICE }} | jq '.services[0].networkConfiguration'
-          )
           aws ecs run-task
-            --task-definition $LATEST_REVISION
+            --task-definition ${{ steps.get_latest_revision.outputs.LATEST_REVISION }}
             --region ${{ env.AWS_REGION }}
             --launch-type FARGATE
             --cluster '${{ env.ECS_CLUSTER }}'
