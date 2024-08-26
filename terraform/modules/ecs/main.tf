@@ -1,14 +1,10 @@
-locals {
-  service_name             = var.project
-  task_definition_name_app = "${local.service_name}-app"
-}
 
 # ==========================================================================================================================
 # ECR
 # ==========================================================================================================================
 
 resource "aws_ecr_repository" "default" {
-  name = var.project
+  name = "django-playground"
 
   # イメージのタグを後から変更可能にするかどうか
   # たぶん、CIからイメージをpushするときにリビジョンを更新するためにMUTABLEな必要がある
@@ -26,8 +22,12 @@ resource "aws_ecr_repository" "default" {
 # cluster
 # ==========================================================================================================================
 
+locals {
+  cluster_name = "${var.project}-${var.environment}"
+}
+
 resource "aws_ecs_cluster" "default" {
-  name = "${var.project}-${var.environment}-ecsCluster"
+  name = local.cluster_name
 
   tags = {
     Name        = "${var.project}-${var.environment}-ecsCluster"
@@ -41,8 +41,15 @@ resource "aws_ecs_cluster" "default" {
 # service
 # ==========================================================================================================================
 
-resource "aws_ecs_service" "default" {
-  name    = local.service_name
+locals {
+  # workerができたら-app/-workerとかで区別する
+  service_app                         = "${local.cluster_name}-app"
+  task_definition_app                 = local.service_app
+  task_definition_app__container_main = "${local.task_definition_app}-main"
+}
+
+resource "aws_ecs_service" "app" {
+  name    = local.service_app
   cluster = aws_ecs_cluster.default.id
 
   # 希望するタスクの数
@@ -53,7 +60,7 @@ resource "aws_ecs_service" "default" {
 
   load_balancer {
     target_group_arn = var.alb_target_group_arn
-    container_name   = local.service_name
+    container_name   = local.task_definition_app__container_main
     container_port   = 80
   }
 
@@ -80,7 +87,7 @@ resource "aws_ecs_service" "default" {
 # ==========================================================================================================================
 
 resource "aws_ecs_task_definition" "app" {
-  family                   = local.task_definition_name_app
+  family                   = local.task_definition_app
   network_mode             = "awsvpc"
   requires_compatibilities = ["FARGATE"]
   cpu                      = "1024"
@@ -99,7 +106,7 @@ resource "aws_ecs_task_definition" "app" {
   # アプリケーション自体と、ログ送信のためのコンテナなど。
   container_definitions = jsonencode([
     {
-      name      = "${local.task_definition_name_app}-main"
+      name      = local.task_definition_app__container_main
       image     = "nginx:latest" # 仮のイメージを指定する。後からCIによって適切なイメージを指定した新しいリビジョンが積まれる
       essential = true
       portMappings = [

@@ -9,12 +9,12 @@ env:
   # terraformでのタスク定義の記述と一致する必要がある
   AWS_REGION: us-east-1
   ECR_REPOSITORY: django-playground
-  ECS_SERVICE: django-playground
-  ECS_CLUSTER: djangoPlayground-dev-ecsCluster
-  CONTAINER_NAME_APP: django-playground-app
+  ECS_CLUSTER: djangoPlayground-dev
+  ECS_SERVICE: djangoPlayground-dev-app
+  CONTAINER_NAME_APP: djangoPlayground-app-main
 
-  # 一時的にタスク定義の内容を表現するjsonファイルを保存するpath
-  ECS_TASK_DEFINITION_APP: task-definition/app.json
+  # 一時的にタスク定義の内容を表現するjsonファイルの名前
+  ECS_TASK_DEFINITION_APP: task-definition-app.json
 
 jobs:
   deploy:
