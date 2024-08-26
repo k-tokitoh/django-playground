@@ -1,0 +1,21 @@
+# TODO: prod/devで共通化できる部分は共通化する
+
+# prodに揃える
+FROM --platform=linux/amd64 python:3.11.5-slim-bookworm
+
+# set work directory
+WORKDIR /usr/src/app
+
+# mysqlclientというpip packageのインストールの前提として必要
+# see: https://pypi.org/project/mysqlclient/
+RUN apt-get update
+RUN apt-get install -y python3-dev default-libmysqlclient-dev build-essential pkg-config
+
+# install dependencies
+RUN pip install --upgrade pip
+COPY ./requirements.txt .
+RUN pip install -r requirements.txt
+
+EXPOSE 8000
+
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
