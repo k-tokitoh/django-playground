@@ -12,6 +12,10 @@ services:
     ports:
       - "3306:3306"
 
+    volumes:
+      # DBのデータはコンテナ内の一時的な場所ではなく、より長いライフサイクルをもつvolumeに保存する
+      - db-data:/var/lib/mysql
+
     # 4byteのマルチバイト文字を扱えるcharacter set / 日本語用のひらがなとカタカナを区別するcollation
     command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_ja_0900_as_cs_ks
 
@@ -34,3 +38,6 @@ services:
     depends_on:
       db:
         condition: service_healthy
+
+volumes:
+  db-data:
