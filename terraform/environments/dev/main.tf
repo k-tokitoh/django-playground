@@ -92,3 +92,15 @@ module "ecs" {
   database_username_ssm_parameter_arn = module.rds.database_username_ssm_parameter_arn
   database_password_ssm_parameter_arn = module.rds.database_password_ssm_parameter_arn
 }
+
+module "cloudfront" {
+  source = "../../modules/cloudfront"
+
+  project                 = var.project
+  environment             = var.environment
+  domain                  = module.route53.domain
+  route53_zone_id         = module.route53.zone_id
+  certificate_arn         = module.acm.certificate_arn
+  alb_name                = module.alb.alb.name
+  alb_route53_record_name = module.alb.route53_record_name
+}
