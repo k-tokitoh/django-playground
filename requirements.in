@@ -1,3 +1,13 @@
 Django
+
+# web server. wsgi serverの代表的なもの
 gunicorn
+
+# MySQL のデータベースに接続するために必要
 mysqlclient
+
+# AWSのSDK
+boto3
+
+# django の Storage API に対して、S3をはじめとする各種クラウドストレージでの実装実装を提供するライブラリ
+django-storages
