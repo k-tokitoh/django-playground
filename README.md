@@ -27,7 +27,10 @@
 
 ## run server
 
-- `docker compose up`
+- デフォルト開発サーバー
+  - `docker compose up`
+- nginx
+  - `docker compose up -f docker-compose.yml -f docker-compose.nginx.yml`
 
 ## deploy
 
