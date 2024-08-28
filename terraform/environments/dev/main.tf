@@ -104,3 +104,10 @@ module "cloudfront" {
   alb_name                = module.alb.alb.name
   alb_route53_record_name = module.alb.route53_record_name
 }
+
+module "s3" {
+  source = "../../modules/s3"
+
+  project     = var.project
+  environment = var.environment
+}
