@@ -15,3 +15,17 @@ DATABASES = {
         "PASSWORD": os.getenv("DATABASE_PASSWORD"),
     }
 }
+
+STORAGES = {
+    "staticfiles": {
+        # django.contrib.staticfiles の collectstatic コマンドは、staticファイルを1ヶ所にまとめたうえで、開発用サーバ以外の場合にはディスクに配置する
+        # そのディスクへの配置の際にstorage APIを利用するが、どのstorage実装を利用するかを以下で指定する
+        # S3ManifestStaticStorageは、S3にアップロードしつつhash値を付加してくれる
+        "BACKEND": "storages.backends.s3.S3ManifestStaticStorage",
+        "OPTIONS": {
+            "bucket_name": "djangoplayground-dev-static-rbctek",
+            "file_overwrite": False,
+            "location": "production",
+        },
+    }
+}

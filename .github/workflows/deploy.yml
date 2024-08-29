@@ -38,6 +38,20 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
+      ################################# static
+
+      - name: deploy static files
+        # 現状だとpip installをこことdocker buildの両方で実行している。docker imageを利用してstatic deployすることで1回にしたい。
+        # noinputの説明
+        run: |
+          apt-get update
+          apt-get install -y python3-dev default-libmysqlclient-dev build-essential pkg-config
+          pip install -r requirements.txt
+          cd awesome-django-project
+          python manage.py collectstatic --noinput
+
+      ################################# image
+
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@62f4f872db3836360b72999f4b87f1ff13310f3a
