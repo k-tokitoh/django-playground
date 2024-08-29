@@ -28,9 +28,19 @@
 ## run server
 
 - デフォルト開発サーバー
-  - `docker compose up`
-- nginx
-  - `docker compose up -f docker-compose.yml -f docker-compose.nginx.yml`
+  - 手順
+    - `docker compose up`
+    - browse on `http://localhost:8000`
+- nginx + gunicorn
+  - 説明
+    - nginx は前段で static ファイルの配信、gunicorn が後段で django を動作させる wsgi サーバ
+    - 実際つかうことは基本的になさそう
+    - static ファイルの配信周りを整える際に少し本番に近い動作を見たかったのでつくっただけ
+  - 手順
+    - static ファイルを収集する
+      - `python manage.py collectstatic`
+    - `docker compose -f docker-compose.yml -f docker-compose.nginx.yml up`
+    - browse on `http://localhost:80`
 
 ## deploy
 

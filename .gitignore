@@ -2,8 +2,13 @@
 .history/
 __pycache__/
 
-# terraform
+######## terraform
 .terraform/
 *.tfstate
 *.tfstate.backup
 .terraform.tfstate.lock.info
+
+######## django
+
+# collectstatic で static ファイルが集約されるディレクトリ（STATIC_ROOT）
+awesome-django-project/static/*

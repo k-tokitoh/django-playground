@@ -35,8 +35,29 @@ INSTALLED_APPS = [
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
+    # デフォルトで入っている。各アプリケーション配下などのstaticファイルを配信のために1ヶ所に収集する。
+    # 開発用サーバの場合には、収集された結果はサーバのメモリ上に保持され、ディスクには保存されない。
     "django.contrib.staticfiles",
 ]
+
+# django.contrib.staticfiles の collectstatic コマンドによって収集された static ファイルは、
+# 開発用サーバの場合ではそのままstaticファイルを配信するのでサーバのメモリにのる。
+# それ以外の場合にはいったんディスクに配置される。そのディスク上の配置先を指定するのが STATIC_ROOT
+# よって開発用サーバの場合には、STATIC_ROOT の指定は不要
+# ローカルでnginx+gunicorn構成を選択肢として用意しているので、そのケースのためにbase.ymlで設定している
+# gunicornは静的ファイルの配信を行わない。なのでcollectstaticによってSTATIC_ROOTに収集し、それをnginxのコンテナにマウントすることでnginxから配信する。
+STATIC_ROOT = "static"
+
+STORAGES = {
+    "staticfiles": {
+        # django.contrib.staticfiles の collectstatic コマンドは、staticファイルを1ヶ所にまとめたうえで、開発用サーバ以外の場合にはディスクに配置する
+        # そのディスクへの配置の際にstorage APIを利用するが、どのstorage実装を利用するかを以下で指定する
+        # 開発用サーバではそもそもstaticeファイルをディスクに配置しないので、ここの設定は意味がないと思われる
+        # ただしローカルでnginx+gunicorn構成を選択肢として用意しているので、そのケースのためにbase.ymlでstorage実装を設定している
+        # ManifestStaticFilesStorageは、staticファイルのURLにハッシュ値を付与することでバージョンニングするstorage実装（ただしDEBUG=Falseの場合のみ）
+        "BACKEND": "django.contrib.staticfiles.storage.ManifestStaticFilesStorage",
+    }
+}
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
