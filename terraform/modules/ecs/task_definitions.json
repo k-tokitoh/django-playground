@@ -10,6 +10,15 @@
         "hostPort": 80
       }
     ],
+    "logConfiguration": {
+      "logDriver": "awslogs",
+      "options": {
+        "awslogs-create-group": "true",
+        "awslogs-group": "/ecs/django-playground-ecs-task-definition",
+        "awslogs-region": "us-east-1",
+        "awslogs-stream-prefix": "ecs"
+      }
+    },
     "environment": [
       {
         "name": "DJANGO_SETTINGS_MODULE",
