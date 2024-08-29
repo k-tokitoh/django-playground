@@ -35,9 +35,9 @@
   - 説明
     - nginx は前段で static ファイルの配信、gunicorn が後段で django を動作させる wsgi サーバ
     - 実際つかうことは基本的になさそう
-    - static ファイルの配信周りを整える際に少し本番に近い動作を見たかったのでつくっただけ
+    - static ファイルの配信周りを整える際に少し本番に近い動作を見たかったので用意しただけ
   - 手順
-    - static ファイルを収集する
+    - static ファイルを収集する（-> nginx のコンテナに mount される）
       - `python manage.py collectstatic`
     - `docker compose -f docker-compose.yml -f docker-compose.nginx.yml up`
     - browse on `http://localhost:80`
