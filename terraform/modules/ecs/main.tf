@@ -98,7 +98,7 @@ resource "aws_ecs_task_definition" "app" {
   memory                   = "3072"
 
   # タスクを起動するときに権限が必要
-  execution_role_arn = data.aws_iam_role.ecs_task_execution.arn
+  execution_role_arn = aws_iam_role.ecs_task_execution.arn
 
   runtime_platform {
     cpu_architecture        = "X86_64"
@@ -128,7 +128,7 @@ resource "aws_ecs_task_definition" "migration" {
   memory                   = "3072"
 
   # タスクを起動するときに権限が必要
-  execution_role_arn = data.aws_iam_role.ecs_task_execution.arn
+  execution_role_arn = aws_iam_role.ecs_task_execution.arn
 
   runtime_platform {
     cpu_architecture        = "X86_64"
@@ -150,12 +150,32 @@ resource "aws_ecs_task_definition" "migration" {
 # role
 # ==========================================================================================================================
 
-# ecs実行ロール（aws管理）
-data "aws_iam_role" "ecs_task_execution" {
-  name = "ecsTaskExecutionRole"
+# ecs実行ロール
+resource "aws_iam_role" "ecs_task_execution" {
+  name               = "ecsTaskExecutionRole"
+  assume_role_policy = data.aws_iam_policy_document.ecs_task_execution.json
 }
 
-# parameter storeからDB接続情報を取得できるpolicy
+# どういう人ならそのロールを引き受けられるか
+data "aws_iam_policy_document" "ecs_task_execution" {
+  statement {
+    actions = ["sts:AssumeRole"]
+
+    principals {
+      # ユーザーではなくリソースがロールを引き受ける場合は"Service"を指定する
+      type        = "Service"
+      identifiers = ["ecs-tasks.amazonaws.com"]
+    }
+  }
+}
+
+resource "aws_iam_role_policy_attachment" "ecs_task_execution__default" {
+  role = aws_iam_role.ecs_task_execution.name
+  # aws管理ポリシーは、コンソールからarnをコピペすればOK
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
+}
+
+# parameter storeからDB接続情報を取得できるカスタムpolicy
 resource "aws_iam_policy" "get_parameter_store" {
   name        = "CustomSSMPolicy"
   description = "Policy for accessing SSM parameters for ECS tasks"
@@ -181,8 +201,7 @@ resource "aws_iam_policy" "get_parameter_store" {
   })
 }
 
-# parameter storeからDB接続情報を取得できるpolicyを、デフォルトのecs実行ロールに付け加える
 resource "aws_iam_role_policy_attachment" "ecs_task_execution__get_parameter_store" {
-  role       = data.aws_iam_role.ecs_task_execution.name
+  role       = aws_iam_role.ecs_task_execution.name
   policy_arn = aws_iam_policy.get_parameter_store.arn
 }
