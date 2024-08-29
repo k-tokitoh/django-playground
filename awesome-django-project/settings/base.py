@@ -48,17 +48,6 @@ INSTALLED_APPS = [
 # gunicornは静的ファイルの配信を行わない。なのでcollectstaticによってSTATIC_ROOTに収集し、それをnginxのコンテナにマウントすることでnginxから配信する。
 STATIC_ROOT = "static"
 
-STORAGES = {
-    "staticfiles": {
-        # django.contrib.staticfiles の collectstatic コマンドは、staticファイルを1ヶ所にまとめたうえで、開発用サーバ以外の場合にはディスクに配置する
-        # そのディスクへの配置の際にstorage APIを利用するが、どのstorage実装を利用するかを以下で指定する
-        # 開発用サーバではそもそもstaticeファイルをディスクに配置しないので、ここの設定は意味がないと思われる
-        # ただしローカルでnginx+gunicorn構成を選択肢として用意しているので、そのケースのためにbase.ymlでstorage実装を設定している
-        # ManifestStaticFilesStorageは、staticファイルのURLにハッシュ値を付与することでバージョンニングするstorage実装（ただしDEBUG=Falseの場合のみ）
-        "BACKEND": "django.contrib.staticfiles.storage.ManifestStaticFilesStorage",
-    }
-}
-
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",

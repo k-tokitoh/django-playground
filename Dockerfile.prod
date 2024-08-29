@@ -1,6 +1,8 @@
 # fargateで動くようにplatformを指定する
 FROM --platform=linux/amd64 python:3.11.5-slim-bookworm
 
+ENV DJANGO_SETTINGS_MODULE settings.production
+
 # set work directory
 WORKDIR /usr/src/app
 

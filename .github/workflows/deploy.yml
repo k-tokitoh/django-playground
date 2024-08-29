@@ -62,9 +62,11 @@ jobs:
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           IMAGE_TAG: ${{ github.sha }}
+          # AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          # AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         # noinputの説明
         run: |
-          docker run $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG python manage.py collectstatic --noinput
+          docker run --env AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} --env AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} ${{ steps.build-image.outputs.image }} python manage.py collectstatic --noinput
 
       ################################# migration
 
