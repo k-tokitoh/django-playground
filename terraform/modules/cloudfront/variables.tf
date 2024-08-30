@@ -25,3 +25,16 @@ variable "alb_name" {
 variable "alb_route53_record_name" {
   type = string
 }
+
+variable "s3_bucket" {
+  type = object({
+    static = object({
+      id                  = string
+      reginal_domain_name = string
+    })
+  })
+}
+
+variable "origin_access_identity_path" {
+  type = string
+}

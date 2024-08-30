@@ -37,13 +37,14 @@ resource "aws_s3_bucket_public_access_block" "s3_static_bucket_public_access_blo
   restrict_public_buckets = false
 }
 
-# TODO: あとで直す（途中段階で確認しやすいように入れただけ）
-resource "aws_s3_bucket_policy" "static_all" {
+# policyを付与する交差テーブル的なresource
+resource "aws_s3_bucket_policy" "static" {
   bucket = aws_s3_bucket.static.bucket
-  policy = data.aws_iam_policy_document.static_all.json
+  policy = data.aws_iam_policy_document.static.json
 }
 
-data "aws_iam_policy_document" "static_all" {
+data "aws_iam_policy_document" "static" {
+  # TODO: あとで直す（途中段階で確認しやすいように一時的にパブリックアクセスを許可している）
   statement {
     effect    = "Allow"
     actions   = ["s3:GetObject"]
@@ -53,4 +54,20 @@ data "aws_iam_policy_document" "static_all" {
       identifiers = ["*"]
     }
   }
+
+  # cloudfrontからのアクセスを許可
+  statement {
+    effect = "Allow"
+    principals {
+      type        = "AWS"
+      identifiers = [aws_cloudfront_origin_access_identity.default.iam_arn]
+    }
+    actions   = ["s3:GetObject"]
+    resources = ["arn:aws:s3:::${aws_s3_bucket.static.bucket}/*"]
+  }
+}
+
+# cloudfrontからs3にアクセスする場合にどういう立場でもってアクセスするかを定義する
+resource "aws_cloudfront_origin_access_identity" "default" {
+  comment = "${var.project}-${var.environment}"
 }

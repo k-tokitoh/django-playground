@@ -93,21 +93,24 @@ module "ecs" {
   database_password_ssm_parameter_arn = module.rds.database_password_ssm_parameter_arn
 }
 
-module "cloudfront" {
-  source = "../../modules/cloudfront"
-
-  project                 = var.project
-  environment             = var.environment
-  domain                  = module.route53.domain
-  route53_zone_id         = module.route53.zone_id
-  certificate_arn         = module.acm.certificate_arn
-  alb_name                = module.alb.alb.name
-  alb_route53_record_name = module.alb.route53_record_name
-}
-
 module "s3" {
   source = "../../modules/s3"
 
   project     = var.project
   environment = var.environment
 }
+
+module "cloudfront" {
+  source = "../../modules/cloudfront"
+
+  project                     = var.project
+  environment                 = var.environment
+  domain                      = module.route53.domain
+  route53_zone_id             = module.route53.zone_id
+  certificate_arn             = module.acm.certificate_arn
+  alb_name                    = module.alb.alb.name
+  alb_route53_record_name     = module.alb.route53_record_name
+  s3_bucket                   = module.s3.bucket
+  origin_access_identity_path = module.s3.origin_access_identity_path
+}
+
