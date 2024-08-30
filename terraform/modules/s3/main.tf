@@ -44,17 +44,6 @@ resource "aws_s3_bucket_policy" "static" {
 }
 
 data "aws_iam_policy_document" "static" {
-  # TODO: あとで直す（途中段階で確認しやすいように一時的にパブリックアクセスを許可している）
-  statement {
-    effect    = "Allow"
-    actions   = ["s3:GetObject"]
-    resources = ["arn:aws:s3:::${aws_s3_bucket.static.bucket}/*"]
-    principals {
-      type        = "AWS"
-      identifiers = ["*"]
-    }
-  }
-
   # cloudfrontからのアクセスを許可
   statement {
     effect = "Allow"
@@ -65,9 +54,46 @@ data "aws_iam_policy_document" "static" {
     actions   = ["s3:GetObject"]
     resources = ["arn:aws:s3:::${aws_s3_bucket.static.bucket}/*"]
   }
+
+  # VPCEからのアクセスを許可
+  statement {
+    effect = "Allow"
+    principals {
+      type        = "AWS"
+      identifiers = ["*"]
+    }
+    actions   = ["s3:GetObject"]
+    resources = ["arn:aws:s3:::${aws_s3_bucket.static.bucket}/*"]
+    condition {
+      test     = "StringEquals"
+      variable = "aws:sourceVpce"
+      values   = [aws_vpc_endpoint.s3.id]
+    }
+  }
 }
 
 # cloudfrontからs3にアクセスする場合にどういう立場でもってアクセスするかを定義する
 resource "aws_cloudfront_origin_access_identity" "default" {
   comment = "${var.project}-${var.environment}"
+}
+
+# ECRからcloudfrontに対して、インターネットを経由せずにアクセスするためにVPCエンドポイントを設置する
+resource "aws_vpc_endpoint" "s3" {
+  # このVPCに対して設置するよ（internet gatewayみたいな感じ）
+  vpc_id            = var.vpc_id
+  vpc_endpoint_type = "Gateway"
+
+  # ここに向けて通信を送出するよ（VPCEはAWSリソースにアクセスするものなので、service_nameの指定となる）
+  service_name = "com.amazonaws.us-east-1.s3"
+
+  # ルートテーブルは、subnetから外にでるときに「このip宛の通信はここに送るよ」とリストしたもの
+  # route_table_ids を指定すると、指定したルートテーブルに「このipに対する通信はVPCEに送るよ」と登録してくれる
+  # 「このip」の部分は、"com.amazonaws.us-east-1.s3"に対応するipをawsでよしなに管理してくれる（これをprefix listと呼ぶ）
+  route_table_ids = [var.public_route_table_id]
+
+  tags = {
+    Name    = "${var.project}-${var.environment}-s3"
+    Project = var.project
+    Env     = var.environment
+  }
 }

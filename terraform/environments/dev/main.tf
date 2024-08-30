@@ -96,8 +96,10 @@ module "ecs" {
 module "s3" {
   source = "../../modules/s3"
 
-  project     = var.project
-  environment = var.environment
+  project               = var.project
+  environment           = var.environment
+  vpc_id                = module.network.vpc_id
+  public_route_table_id = module.network.public_route_table_id
 }
 
 module "cloudfront" {

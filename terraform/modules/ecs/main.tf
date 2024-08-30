@@ -100,6 +100,9 @@ resource "aws_ecs_task_definition" "app" {
   # タスクを起動するときに権限が必要
   execution_role_arn = aws_iam_role.ecs_task_execution.arn
 
+  # s3にアクセスしたい（いったんひとつのロールに全部つけて、両方それをつかう）
+  task_role_arn = aws_iam_role.ecs_task_execution.arn
+
   runtime_platform {
     cpu_architecture        = "X86_64"
     operating_system_family = "LINUX"
@@ -201,7 +204,35 @@ resource "aws_iam_policy" "get_parameter_store" {
   })
 }
 
+# アタッチする
 resource "aws_iam_role_policy_attachment" "ecs_task_execution__get_parameter_store" {
   role       = aws_iam_role.ecs_task_execution.name
   policy_arn = aws_iam_policy.get_parameter_store.arn
+}
+
+# s3にアクセスできるカスタムpolicy
+resource "aws_iam_policy" "s3" {
+  name        = "CustomS3AccessPolicy"
+  description = "Policy for accessing S3 for ECS tasks"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = [
+          "s3:GetObject",
+          "s3:PutObject",
+          "s3:DeleteObject"
+        ]
+        Effect   = "Allow"
+        Resource = ["arn:aws:s3:::*"]
+      }
+    ]
+  })
+}
+
+# アタッチする
+resource "aws_iam_role_policy_attachment" "ecs_task_execution__s3" {
+  role       = aws_iam_role.ecs_task_execution.name
+  policy_arn = aws_iam_policy.s3.arn
 }
