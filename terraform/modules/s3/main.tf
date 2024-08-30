@@ -21,20 +21,16 @@ resource "aws_s3_bucket_public_access_block" "s3_static_bucket_public_access_blo
   bucket = aws_s3_bucket.static.bucket
 
   # 「パブリックアクセスOKだよ」というACLの追加をブロックする
-  # TODO: あとで直す
-  block_public_acls = false
+  block_public_acls = true
 
   # 「パブリックアクセスOKだよ」というACLが元から存在していた場合、その許可を無視する（パブリックアクセスを禁じる）
-  # TODO: あとで直す
-  ignore_public_acls = false
+  ignore_public_acls = true
 
   # 「パブリックアクセスOKだよ」というpolicyの追加をブロックする
-  # TODO: あとで直す
-  block_public_policy = false
+  block_public_policy = true
 
   # 「パブリックアクセスOKだよ」というpolicyが元から存在していた場合、その許可を無視する（パブリックアクセスを禁じる）
-  # TODO: あとで直す
-  restrict_public_buckets = false
+  restrict_public_buckets = true
 }
 
 # policyを付与する交差テーブル的なresource
@@ -77,7 +73,7 @@ resource "aws_cloudfront_origin_access_identity" "default" {
   comment = "${var.project}-${var.environment}"
 }
 
-# ECRからcloudfrontに対して、インターネットを経由せずにアクセスするためにVPCエンドポイントを設置する
+# ECRからs3に対して、インターネットを経由せずにアクセスするためにVPCエンドポイントを設置する
 resource "aws_vpc_endpoint" "s3" {
   # このVPCに対して設置するよ（internet gatewayみたいな感じ）
   vpc_id            = var.vpc_id
