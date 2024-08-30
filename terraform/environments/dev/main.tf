@@ -77,22 +77,6 @@ module "rds" {
   db_security_group_id = module.network.db_security_group_id
 }
 
-module "ecs" {
-  source = "../../modules/ecs"
-
-  project                             = var.project
-  environment                         = var.environment
-  vpc_id                              = module.network.vpc_id
-  public_subnet_ids                   = module.network.public_subnet_ids
-  ecs_security_group_id               = module.network.ecs_security_group_id
-  alb_target_group_arn                = module.alb.target_group_arn
-  database_host_ssm_parameter_arn     = module.rds.database_host_ssm_parameter_arn
-  database_port_ssm_parameter_arn     = module.rds.database_port_ssm_parameter_arn
-  database_name_ssm_parameter_arn     = module.rds.database_name_ssm_parameter_arn
-  database_username_ssm_parameter_arn = module.rds.database_username_ssm_parameter_arn
-  database_password_ssm_parameter_arn = module.rds.database_password_ssm_parameter_arn
-}
-
 module "s3" {
   source = "../../modules/s3"
 
@@ -116,3 +100,19 @@ module "cloudfront" {
   origin_access_identity_path = module.s3.origin_access_identity_path
 }
 
+module "ecs" {
+  source = "../../modules/ecs"
+
+  project                             = var.project
+  environment                         = var.environment
+  vpc_id                              = module.network.vpc_id
+  public_subnet_ids                   = module.network.public_subnet_ids
+  ecs_security_group_id               = module.network.ecs_security_group_id
+  alb_target_group_arn                = module.alb.target_group_arn
+  database_host_ssm_parameter_arn     = module.rds.database_host_ssm_parameter_arn
+  database_port_ssm_parameter_arn     = module.rds.database_port_ssm_parameter_arn
+  database_name_ssm_parameter_arn     = module.rds.database_name_ssm_parameter_arn
+  database_username_ssm_parameter_arn = module.rds.database_username_ssm_parameter_arn
+  database_password_ssm_parameter_arn = module.rds.database_password_ssm_parameter_arn
+  cloudfront_domain_name              = module.cloudfront.domain_name
+}

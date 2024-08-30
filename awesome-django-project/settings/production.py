@@ -26,6 +26,7 @@ STORAGES = {
             "bucket_name": "djangoplayground-dev-static-rbctek",
             "file_overwrite": False,
             "location": "production",
+            "custom_domain": os.getenv("CLOUDFRONT_DOMAIN"),
         },
     }
 }
