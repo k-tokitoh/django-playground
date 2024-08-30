@@ -100,9 +100,6 @@ resource "aws_ecs_task_definition" "app" {
   # タスクを起動するときに権限が必要
   execution_role_arn = aws_iam_role.ecs_task_execution.arn
 
-  # サーバーのログが吐かれないので、試しにタスク実装ロールと同じものをタスクロールとして指定してみる
-  task_role_arn = aws_iam_role.ecs_task_execution.arn
-
   runtime_platform {
     cpu_architecture        = "X86_64"
     operating_system_family = "LINUX"
@@ -132,9 +129,6 @@ resource "aws_ecs_task_definition" "migration" {
 
   # タスクを起動するときに権限が必要
   execution_role_arn = aws_iam_role.ecs_task_execution.arn
-
-  # サーバーのログが吐かれないので、試しにタスク実装ロールと同じものをタスクロールとして指定してみる
-  task_role_arn = aws_iam_role.ecs_task_execution.arn
 
   runtime_platform {
     cpu_architecture        = "X86_64"
