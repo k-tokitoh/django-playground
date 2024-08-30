@@ -100,8 +100,11 @@ resource "aws_ecs_task_definition" "app" {
   # タスクを起動するときに権限が必要
   execution_role_arn = aws_iam_role.ecs_task_execution.arn
 
-  # s3にアクセスしたい（いったんひとつのロールに全部つけて、両方それをつかう）
-  task_role_arn = aws_iam_role.ecs_task_execution.arn
+  # 起動されたタスクのプロセスに付与される権限を定義する
+  # 少なくともstaticファイルのバージョニングに用いるmanifestの取得のため、s3にアクセスできる必要がある
+  # S3ManifestStaticStorage に custom_domain として cloudfront のドメインを渡しているが、これは template での static タグの解決に利用するだけであり、
+  # collectstatic や manifest の取得においては直接s3に接続するものと思われる。
+  task_role_arn = aws_iam_role.ecs_task.arn
 
   runtime_platform {
     cpu_architecture        = "X86_64"
@@ -152,17 +155,17 @@ resource "aws_ecs_task_definition" "migration" {
 
 
 # ==========================================================================================================================
-# role
+# execution role
 # ==========================================================================================================================
 
-# ecs実行ロール
+# ロールそのもの
 resource "aws_iam_role" "ecs_task_execution" {
   name               = "ecsTaskExecutionRole"
-  assume_role_policy = data.aws_iam_policy_document.ecs_task_execution.json
+  assume_role_policy = data.aws_iam_policy_document.assume.json
 }
 
 # どういう人ならそのロールを引き受けられるか
-data "aws_iam_policy_document" "ecs_task_execution" {
+data "aws_iam_policy_document" "assume" {
   statement {
     actions = ["sts:AssumeRole"]
 
@@ -174,6 +177,7 @@ data "aws_iam_policy_document" "ecs_task_execution" {
   }
 }
 
+# aws管理のポリシーをアタッチ
 resource "aws_iam_role_policy_attachment" "ecs_task_execution__default" {
   role = aws_iam_role.ecs_task_execution.name
   # aws管理ポリシーは、コンソールからarnをコピペすればOK
@@ -212,6 +216,18 @@ resource "aws_iam_role_policy_attachment" "ecs_task_execution__get_parameter_sto
   policy_arn = aws_iam_policy.get_parameter_store.arn
 }
 
+
+# ==========================================================================================================================
+# task role
+# ==========================================================================================================================
+
+# ロールそのもの
+resource "aws_iam_role" "ecs_task" {
+  name = "ecsTaskRole"
+  # assume policyはタスク実行ロールと共通
+  assume_role_policy = data.aws_iam_policy_document.assume.json
+}
+
 # s3にアクセスできるカスタムpolicy
 resource "aws_iam_policy" "s3" {
   name        = "CustomS3AccessPolicy"
@@ -234,7 +250,7 @@ resource "aws_iam_policy" "s3" {
 }
 
 # アタッチする
-resource "aws_iam_role_policy_attachment" "ecs_task_execution__s3" {
-  role       = aws_iam_role.ecs_task_execution.name
+resource "aws_iam_role_policy_attachment" "ecs_task__s3" {
+  role       = aws_iam_role.ecs_task.name
   policy_arn = aws_iam_policy.s3.arn
 }
