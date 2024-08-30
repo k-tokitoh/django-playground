@@ -114,5 +114,5 @@ module "ecs" {
   database_name_ssm_parameter_arn     = module.rds.database_name_ssm_parameter_arn
   database_username_ssm_parameter_arn = module.rds.database_username_ssm_parameter_arn
   database_password_ssm_parameter_arn = module.rds.database_password_ssm_parameter_arn
-  cloudfront_domain_name              = module.cloudfront.domain_name
+  cloudfront_domain                   = module.cloudfront.cloudfront_domain
 }

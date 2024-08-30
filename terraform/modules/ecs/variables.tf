@@ -42,6 +42,6 @@ variable "database_password_ssm_parameter_arn" {
   type = string
 }
 
-variable "cloudfront_domain_name" {
+variable "cloudfront_domain" {
   type = string
 }

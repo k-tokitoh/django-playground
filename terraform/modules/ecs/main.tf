@@ -114,13 +114,13 @@ resource "aws_ecs_task_definition" "app" {
 
   # fileだとjsonを読み込むだけだが、templatefileだと変数を渡すことができる
   container_definitions = templatefile("${path.module}/task_definitions.json", {
-    name                   = local.task_definition_app__container_main,
-    database_host          = var.database_host_ssm_parameter_arn,
-    database_port          = var.database_port_ssm_parameter_arn,
-    database_name          = var.database_name_ssm_parameter_arn,
-    database_username      = var.database_username_ssm_parameter_arn,
-    database_password      = var.database_password_ssm_parameter_arn
-    cloudfront_domain_name = var.cloudfront_domain_name
+    name              = local.task_definition_app__container_main,
+    database_host     = var.database_host_ssm_parameter_arn,
+    database_port     = var.database_port_ssm_parameter_arn,
+    database_name     = var.database_name_ssm_parameter_arn,
+    database_username = var.database_username_ssm_parameter_arn,
+    database_password = var.database_password_ssm_parameter_arn
+    domain_name       = var.cloudfront_domain
   })
 }
 
@@ -140,13 +140,13 @@ resource "aws_ecs_task_definition" "migration" {
   }
 
   container_definitions = templatefile("${path.module}/task_definitions.json", {
-    name                   = local.task_definition_migration__container_main,
-    database_host          = var.database_host_ssm_parameter_arn,
-    database_port          = var.database_port_ssm_parameter_arn,
-    database_name          = var.database_name_ssm_parameter_arn,
-    database_username      = var.database_username_ssm_parameter_arn,
-    database_password      = var.database_password_ssm_parameter_arn,
-    cloudfront_domain_name = var.cloudfront_domain_name
+    name              = local.task_definition_migration__container_main,
+    database_host     = var.database_host_ssm_parameter_arn,
+    database_port     = var.database_port_ssm_parameter_arn,
+    database_name     = var.database_name_ssm_parameter_arn,
+    database_username = var.database_username_ssm_parameter_arn,
+    database_password = var.database_password_ssm_parameter_arn,
+    domain_name       = var.cloudfront_domain
   })
 }
 
