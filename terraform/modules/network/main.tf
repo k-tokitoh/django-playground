@@ -205,27 +205,20 @@ resource "aws_security_group" "alb" {
   }
 }
 
-resource "aws_security_group_rule" "alb_in_http" {
-  security_group_id = aws_security_group.alb.id
-
-  type        = "ingress"
-  protocol    = "tcp"
-  from_port   = 80
-  to_port     = 80
-  cidr_blocks = ["0.0.0.0/0"]
+data "aws_ec2_managed_prefix_list" "cloudfront" {
+  name = "com.amazonaws.global.cloudfront.origin-facing"
 }
 
 resource "aws_security_group_rule" "alb_in_https" {
   security_group_id = aws_security_group.alb.id
 
-  type        = "ingress"
-  protocol    = "tcp"
-  from_port   = 443
-  to_port     = 443
-  cidr_blocks = ["0.0.0.0/0"]
+  type            = "ingress"
+  protocol        = "tcp"
+  from_port       = 443
+  to_port         = 443
+  prefix_list_ids = [data.aws_ec2_managed_prefix_list.cloudfront.id]
 }
 
-# cloudfrontでhttpsでのリダイレクトを強制するようにしたら、ALBまではhttpsが到達しないはずだから、httpリスナーは不要かもしれない
 resource "aws_security_group_rule" "alb_out_http" {
   security_group_id = aws_security_group.alb.id
 
@@ -252,30 +245,38 @@ resource "aws_security_group" "ecs" {
   }
 }
 
-# 絞ったらECRへのイメージ取得が通らなかったのでいったんガバガバにしている。絞りたい
+# albからのアクセスを許可する
 resource "aws_security_group_rule" "ecs_in_http" {
   security_group_id = aws_security_group.ecs.id
 
   type = "ingress"
 
-  # "-1"で任意のプロトコルを許可できる
-  protocol = "-1"
-
-  # 0で任意のポートを許可できる
-  from_port   = 0
-  to_port     = 0
-  cidr_blocks = ["0.0.0.0/0"]
+  # "-1"で任意のプロトコルを許可できる。その場合はfrom_port/to_portは0とすること
+  protocol                 = "tcp"
+  from_port                = 80
+  to_port                  = 80
+  source_security_group_id = aws_security_group.alb.id
 }
 
-# 絞ったらECRへのイメージ取得が通らなかったのでいったんガバガバにしている。絞りたい
+# ECRからimageをpullしたり、S3にアクセスしたりするときはinternet gateway経由で、httpsみたい
 resource "aws_security_group_rule" "ecs_out_https" {
   security_group_id = aws_security_group.ecs.id
 
   type        = "egress"
-  protocol    = "-1"
-  from_port   = 0
-  to_port     = 0
+  protocol    = "tcp"
+  from_port   = 443
+  to_port     = 443
   cidr_blocks = ["0.0.0.0/0"]
+}
+
+resource "aws_security_group_rule" "ecs_out_mysql" {
+  security_group_id = aws_security_group.ecs.id
+
+  type                     = "egress"
+  protocol                 = "tcp"
+  from_port                = 3306
+  to_port                  = 3306
+  source_security_group_id = aws_security_group.db.id
 }
 
 ################################################################################### db

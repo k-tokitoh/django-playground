@@ -18,20 +18,6 @@ resource "aws_lb" "default" {
   enable_deletion_protection = false
 }
 
-# HTTPをport:80で受け付ける
-# cloudfrontでhttpsでのリダイレクトを強制するようにしたら、ALBまではhttpsが到達しないはずだから、httpリスナーは不要かもしれない
-resource "aws_lb_listener" "alb_listener_http" {
-  load_balancer_arn = aws_lb.default.arn
-  port              = 80
-  protocol          = "HTTP"
-
-  default_action {
-    # そのまま転送するよ
-    type             = "forward"
-    target_group_arn = aws_lb_target_group.default.arn
-  }
-}
-
 # ALBでSSL終端するとはすなわち、ALBのhttpsリスナーにACMを登録すること！！
 resource "aws_lb_listener" "alb_listener_https" {
   load_balancer_arn = aws_lb.default.arn
